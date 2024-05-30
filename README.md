@@ -1,6 +1,6 @@
-# Talk-To-ChatGPT has been discontinued
+# Updated Talk-to-GPT extension
 
-It's been fun while it lasted, but for various reasons this extension will not be maintained anymore. You are welcome to create forks and improve upon it. I am unable to keep the extension up to date against OpenAI's changes, and besides, they are releasing desktop apps for MacOS and Windows soon, free of use, which will make this extension obsolete.
+Forked and updated with contributions from community, now compatible with the latest OpenAI models, extension will be gradually improved.
 
 --------------------------
 
