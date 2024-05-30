@@ -18,14 +18,8 @@ Demo V2.6 with ElevenLabs support: https://www.youtube.com/watch?v=gnijfWuenKA
 
 # How to install
 
-### Option 1: CHROME or EDGE STORE
-* Google Chrome: download from the Chrome extension store at https://chrome.google.com/webstore/detail/talk-to-chatgpt/hodadfhfagpiemkeoliaelelfbboamlk 
-* Microsoft Edge: download from the Edge extension store at https://microsoftedge.microsoft.com/addons/detail/talktochatgpt/bkkdkngklccknmoalpoakglipbibafpn
-
-### Option 2: MANUAL INSTALL
-If the extension is temporarily unavailable (this can happen when OpenAI make breaking changes), or if you want to install the latest updates before they are available on the Chrome/Edge web store, you can install the extension manually. Here is how you do it.
-1. Download the .zip file here: https://github.com/C-Nedelcu/talk-to-chatgpt/raw/main/chrome-extension/chrome-extension.zip (this link will always point to the latest version)
-2. Extract the .zip file in a folder somewhere
+1. Download repo as zip
+2. Extract the .zip file in a folder somewhere, move chrome-extension folder (this is the folder you will use to install the extension)
 3. Follow this tutorial to install the extension in Chrome/Edge in dev mode: https://webkul.com/blog/how-to-install-the-unpacked-extension-in-chrome/
 
 # FAQ
