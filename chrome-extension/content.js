@@ -723,24 +723,28 @@ function CN_SplitIntoSentences(text) {
 // Check for new messages the bot has sent. If a new message is found, it will be read out loud
 function CN_CheckNewMessages() {
 	// Any new messages?
-	var currentMessageCount = jQuery(".text-base").length;
+	var currentMessageCount = document.querySelectorAll('.text-base .items-start').length
 	if (currentMessageCount > CN_MESSAGE_COUNT) {
 		// New message!
 		console.log("New message detected! current message count: " + currentMessageCount);
 		CN_MESSAGE_COUNT = currentMessageCount;
-		CN_CURRENT_MESSAGE = jQuery("[class*='group/conversation-turn']").last();
+		CN_CURRENT_MESSAGE = document.querySelectorAll('.text-base .items-start')[currentMessageCount - 1];
 		CN_CURRENT_MESSAGE_SENTENCES = []; // Reset list of parts already spoken
 		CN_CURRENT_MESSAGE_SENTENCES_NEXT_READ = 0;
 	}
 	
 	// Split current message into parts
-	if (CN_CURRENT_MESSAGE && CN_CURRENT_MESSAGE.length) {
-		var currentText = jQuery(".text-base:last").find(".items-start").text()+"";
-		////console.log("currentText:" + currentText);
+	if (CN_CURRENT_MESSAGE) {
+		var currentText = document.querySelectorAll('.text-base .items-start')[currentMessageCount - 1].innerText + "";
+		//console.log("currentText:" + currentText);
+
 		
 		// Remove code blocks?
 		if (CN_IGNORE_CODE_BLOCKS) {
-			currentText = jQuery(".text-base:last").find(".items-start").find(".markdown").contents().not("pre").text();
+			currentText = ""
+			document.querySelectorAll('.text-base .items-start')[currentMessageCount - 1].querySelectorAll(".markdown > :not(pre)").forEach(n => {
+				currentText += n.innerText
+			});
 			////console.log("[CODE] currentText:" + currentText);
 		}
 		
@@ -754,12 +758,13 @@ function CN_CheckNewMessages() {
 				CN_CURRENT_MESSAGE_SENTENCES_NEXT_READ = i+1;
 
 				var lastPart = newSentences[i];
-				////console.log("Will say sentence out loud: "+lastPart);
+				//console.log("Will say sentence out loud: "+lastPart);
 				CN_SayOutLoud(lastPart);
 			}
 			CN_CURRENT_MESSAGE_SENTENCES = newSentences;
 		}
 	}
+	
 	
 	setTimeout(CN_CheckNewMessages, 100);
 }
@@ -1212,7 +1217,7 @@ function CN_StartTTGPT() {
 		CN_StartSpeechRecognition();
 		
 		// Make sure message count starts from last; we don't want to read the latest message
-		var currentMessageCount = jQuery(".text-base").length;
+		var currentMessageCount = document.querySelectorAll('.text-base .items-start').length;
 		if (currentMessageCount > CN_MESSAGE_COUNT) {
 			// New message!
 			CN_MESSAGE_COUNT = currentMessageCount;
