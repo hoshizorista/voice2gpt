@@ -1,4 +1,4 @@
-﻿// TALK TO CHATGPT
+// TALK TO CHATGPT
 // ---------------
 // Author		: C. NEDELCU
 // Version		: 2.9.0 (03/12/2023)
@@ -769,34 +769,55 @@ function CN_CheckNewMessages() {
 	setTimeout(CN_CheckNewMessages, 100);
 }
 
-// Send a message to the bot (will simply put text in the textarea and simulate a send button click)
 function CN_SendMessage(text) {
-    // Put message in textarea
-    jQuery("#prompt-textarea").focus();
-    var existingText = jQuery("#prompt-textarea").val();
+    console.log("[CN_SendMessage] Trying to send message: " + text + " ");
 
-    // Is there already existing text?
-    if (!existingText) CN_SetTextareaValue(text);
-    else CN_SetTextareaValue(existingText + " " + text);
+    // Find the textarea either by class or id
+    var textarea = jQuery('.overflow-hidden textarea');
+    if (!textarea.length) {
+        textarea = jQuery('#prompt-textarea');
+        if (!textarea.length) {
+            console.error('Textarea not found');
+            return;
+        }
+    }
 
-    // Change height in case
-    var fullText = existingText + " " + text;
+    // Focus on the textarea and simulate typing
+    textarea.focus();
+    var existingText = textarea.val();
+    var fullText = existingText ? existingText + ' ' + text : text;
+    var event = new Event('input', { bubbles: true });
+    textarea.val(fullText)[0].dispatchEvent(event);
+
+    // Adjust the height of the textarea
     var rows = Math.ceil(fullText.length / 88);
     var height = rows * 24;
-    jQuery("#prompt-textarea").css("height", height + "px");
+    textarea.css('height', height + 'px');
 
-    // Encuentra el botón de envío y habilítalo
-    jQuery("#prompt-textarea").closest("div").next("button").prop("disabled", false);
-    if (CN_AUTO_SEND_AFTER_SPEAKING) {
-        jQuery("#prompt-textarea").closest("div").next("button").click();
+    // Find the send button and enable it
+    var sendButton = jQuery("[data-testid='fruitjuice-send-button']");
+    if (sendButton.length) {
+        sendButton.prop('disabled', false); // Force enable
+        sendButton.removeAttr('disabled').removeClass('disabled');
 
-        // Stop speech recognition until the answer is received
-        if (CN_SPEECHREC) {
-            clearTimeout(CN_TIMEOUT_KEEP_SPEECHREC_WORKING);
-            CN_SPEECHREC.stop();
+        // Ensure the button is enabled and click it
+        if (!sendButton.is(':disabled')) {
+            sendButton.click(); // Attempt to click using jQuery
+            sendButton[0].click(); // Attempt to click using DOM API
+            console.log("[CN_SendMessage] Automatically clicking the send button.");
+        } else {
+            console.log("[CN_SendMessage] The send button is enabled but could not be clicked.");
         }
     } else {
-        // No autosend, so continue recognizing
+        console.error("[CN_SendMessage] Send button not found.");
+    }
+
+    // Additional logic for speech recognition, if applicable
+    if (CN_SPEECHREC) {
+        clearTimeout(CN_TIMEOUT_KEEP_SPEECHREC_WORKING);
+        CN_SPEECHREC.stop();
+    } else {
+        // Continue speech recognition
         clearTimeout(CN_TIMEOUT_KEEP_SPEECHREC_WORKING);
         CN_TIMEOUT_KEEP_SPEECHREC_WORKING = setTimeout(CN_KeepSpeechRecWorking, 100);
     }
