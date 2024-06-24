@@ -802,7 +802,6 @@ function CN_SendMessage(text) {
 
         // Ensure the button is enabled and click it
         if (!sendButton.is(':disabled')) {
-            sendButton.click(); // Attempt to click using jQuery
             sendButton[0].click(); // Attempt to click using DOM API
             console.log("[CN_SendMessage] Automatically clicking the send button.");
         } else {
