@@ -1751,7 +1751,7 @@ function CN_SaveSettings() {
 		
 		// ElevenLabs
 		CN_TTS_ELEVENLABS = jQuery("#TTGPTElevenLabs").prop("checked");
-		CN_TTS_ELEVENLABS_APIKEY = CN_RemovePunctuation(jQuery("#TTGPTElevenLabsKey").val()+"");
+		CN_TTS_ELEVENLABS_APIKEY = jQuery("#TTGPTElevenLabsKey").val()+"";
 		CN_TTS_ELEVENLABS_VOICE = jQuery("#TTGPTElevenLabsVoice").val()+"";
 		CN_TTS_ELEVENLABS_STABILITY = jQuery("#TTGPTElevenLabsStability").val();
 		CN_TTS_ELEVENLABS_SIMILARITY = jQuery("#TTGPTElevenLabsSimilarity").val();
