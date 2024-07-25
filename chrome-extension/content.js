@@ -723,26 +723,26 @@ function CN_SplitIntoSentences(text) {
 // Check for new messages the bot has sent. If a new message is found, it will be read out loud
 function CN_CheckNewMessages() {
 	// Any new messages?
-	var currentMessageCount = document.querySelectorAll('.text-base .items-start').length
+	var currentMessageCount = document.querySelectorAll('.text-message').length
 	if (currentMessageCount > CN_MESSAGE_COUNT) {
 		// New message!
 		console.log("New message detected! current message count: " + currentMessageCount);
 		CN_MESSAGE_COUNT = currentMessageCount;
-		CN_CURRENT_MESSAGE = document.querySelectorAll('.text-base .items-start')[currentMessageCount - 1];
+		CN_CURRENT_MESSAGE = document.querySelectorAll('.text-message')[currentMessageCount - 1];
 		CN_CURRENT_MESSAGE_SENTENCES = []; // Reset list of parts already spoken
 		CN_CURRENT_MESSAGE_SENTENCES_NEXT_READ = 0;
 	}
 	
 	// Split current message into parts
 	if (CN_CURRENT_MESSAGE) {
-		var currentText = document.querySelectorAll('.text-base .items-start')[currentMessageCount - 1].innerText + "";
+		var currentText = document.querySelectorAll('.text-message')[currentMessageCount - 1].innerText + "";
 		//console.log("currentText:" + currentText);
 
 		
 		// Remove code blocks?
 		if (CN_IGNORE_CODE_BLOCKS) {
 			currentText = ""
-			document.querySelectorAll('.text-base .items-start')[currentMessageCount - 1].querySelectorAll(".markdown > :not(pre)").forEach(n => {
+			document.querySelectorAll('.text-message')[currentMessageCount - 1].querySelectorAll(".markdown > :not(pre)").forEach(n => {
 				currentText += n.innerText
 			});
 			////console.log("[CODE] currentText:" + currentText);
@@ -794,22 +794,23 @@ function CN_SendMessage(text) {
     var height = rows * 24;
     textarea.css('height', height + 'px');
 
-    // Find the send button and enable it
-    var sendButton = jQuery("[data-testid='fruitjuice-send-button']");
-    if (sendButton.length) {
-        sendButton.prop('disabled', false); // Force enable
-        sendButton.removeAttr('disabled').removeClass('disabled');
+  // Find the send button and enable it
+var sendButton = jQuery("[data-testid='send-button']"); 
+if (sendButton.length) {
+    sendButton.prop('disabled', false); // Force enable
+    sendButton.removeAttr('disabled').removeClass('disabled');
 
-        // Ensure the button is enabled and click it
-        if (!sendButton.is(':disabled')) {
-            sendButton[0].click(); // Attempt to click using DOM API
-            console.log("[CN_SendMessage] Automatically clicking the send button.");
-        } else {
-            console.log("[CN_SendMessage] The send button is enabled but could not be clicked.");
-        }
+    // Ensure the button is enabled and click it
+    if (!sendButton.is(':disabled')) {
+        sendButton[0].click(); // Attempt to click using DOM API
+        console.log("[CN_SendMessage] Automatically clicking the send button.");
     } else {
-        console.error("[CN_SendMessage] Send button not found.");
+        console.log("[CN_SendMessage] The send button is enabled but could not be clicked.");
     }
+} else {
+    console.error("[CN_SendMessage] Send button not found.");
+}
+
 
     // Additional logic for speech recognition, if applicable
     if (CN_SPEECHREC) {
@@ -1237,7 +1238,7 @@ function CN_StartTTGPT() {
 		CN_StartSpeechRecognition();
 		
 		// Make sure message count starts from last; we don't want to read the latest message
-		var currentMessageCount = document.querySelectorAll('.text-base .items-start').length;
+		var currentMessageCount = document.querySelectorAll('.text-message').length;
 		if (currentMessageCount > CN_MESSAGE_COUNT) {
 			// New message!
 			CN_MESSAGE_COUNT = currentMessageCount;
