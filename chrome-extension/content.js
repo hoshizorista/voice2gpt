@@ -1,11 +1,11 @@
-// TALK TO CHATGPT
+// TalkGPT
+// Based on Talk To Chatgpt by C. Nedelcu
 // ---------------
-// Author		: C. NEDELCU
-// Version		: 2.9.0 (03/12/2023)
-// Git repo 	: https://github.com/C-Nedelcu/talk-to-chatgpt
+// Author		: Juan Granados
+// Version		: 1.13 (24/09/2024)
+// Git repo 	: https://github.com/hoshizorista/talkgpt
 // Chat GPT URL	: https://chat.openai.com/chat
-// How to use   : https://www.youtube.com/watch?v=VXkLQMEs3lA
-// Credits		: C. NEDELCU (code), pixelsoda (GUI), S. James (GUI)
+// Credits		: C. NEDELCU (code), J. Granados (bugfixes, UI update), pixelsoda (GUI), S. James (GUI)
 
 // ----------------------------
 // SETTINGS (FEEL FREE TO EDIT)
@@ -16,6 +16,8 @@
 // Settings for the text-to-speech functionality (the bot's voice)
 var CN_TEXT_TO_SPEECH_RATE = 1; // The higher the rate, the faster the bot will speak
 var CN_TEXT_TO_SPEECH_PITCH = 1; // This will alter the pitch for the bot's voice
+
+var CN_AUTO_CLICK_VOICE_BUTTONS = false; // Default is disabled
 
 // Indicate a locale code such as 'fr-FR', 'en-US', to use a particular language for the speech recognition functionality (when you speak into the mic)
 // If you leave this blank, the system's default language will be used
@@ -159,6 +161,13 @@ function CN_SayOutLoud(text) {
             CN_IS_LISTENING = false; // Ensure this flag is set to false here
         }
 
+		if (CN_AUTO_CLICK_VOICE_BUTTONS) {
+			// Make border grey again
+			CN_SPEECHREC.stop();
+			setStatusBarBackground("grey");
+			return;
+		}
+
 	// What is the TTS method?
 	if (CN_TTS_ELEVENLABS) {
 		// We are using ElevenLabs, so push message to queue
@@ -182,7 +191,7 @@ function CN_SayOutLoud(text) {
 	msg.pitch = CN_TEXT_TO_SPEECH_PITCH;
 	msg.onstart = () => {
 		// Make border green
-		setStatusBarBackground("green");
+		setStatusBarBackground("#AAFF00");
 		
 		// If speech recognition is active, disable it
 		if (CN_IS_LISTENING) CN_SPEECHREC.stop();
@@ -203,7 +212,7 @@ function CN_SayOutLoud(text) {
 function CN_SayOutLoudAzure(text) {
 
 	// Make border green
-	setStatusBarBackground("green");
+	setStatusBarBackground("#AAFF00");
 
 	 // Add the text to the queue
 	 CN_TTS_AZURE_QUEUE.push({
@@ -374,7 +383,7 @@ function getAzureVoices(apikey, region) {
 // Say a message out loud using ElevenLabs
 function CN_SayOutLoudElevenLabs(text) {
 	// Make border green
-	setStatusBarBackground("green");
+	setStatusBarBackground("#AAFF00");
 	
 	// Push message into queue (sequentially)
 	CN_TTS_ELEVENLABS_QUEUE.push({
@@ -770,59 +779,80 @@ function CN_CheckNewMessages() {
 }
 
 function CN_SendMessage(text) {
-    console.log("[CN_SendMessage] Trying to send message: " + text + " ");
+    console.log("[CN_SendMessage] Trying to send message: " + text);
 
-    // Find the textarea either by class or id
-    var textarea = jQuery('.overflow-hidden textarea');
-    if (!textarea.length) {
-        textarea = jQuery('#prompt-textarea');
-        if (!textarea.length) {
-            console.error('Textarea not found');
-            return;
+    var editableDiv = jQuery('#prompt-textarea[contenteditable="true"]');
+
+    if (!editableDiv.length) {
+        console.error('Editable div not found');
+        return;
+    }
+
+    // Focus on the div
+    editableDiv.focus();
+
+    // Insert the text into the div
+    document.execCommand('insertText', false, text);
+
+    // Dispatch input and change events
+    var inputEvent = new Event('input', { bubbles: true });
+    editableDiv[0].dispatchEvent(inputEvent);
+
+    var changeEvent = new Event('change', { bubbles: true });
+    editableDiv[0].dispatchEvent(changeEvent);
+
+    // Add a small delay before attempting to send
+    setTimeout(() => {
+        // Try to find the React component and its props
+        var reactKey = Object.keys(editableDiv[0]).find(key => key.startsWith("__reactProps$"));
+        if (reactKey) {
+            var reactProps = editableDiv[0][reactKey];
+            console.log("React props found:", reactProps);
+
+            // Look for a submit or send function in the props
+            var sendFunction = reactProps.onSubmit || reactProps.onSend || reactProps.handleSubmit;
+            if (typeof sendFunction === 'function') {
+                sendFunction({preventDefault: () => {}});
+                console.log("[CN_SendMessage] Called React send function");
+            } else {
+                console.log("No suitable send function found in React props");
+            }
+
+            // If no send function found, try to simulate Enter without Shift
+            if (!sendFunction) {
+                var enterEvent = new KeyboardEvent('keydown', {
+                    bubbles: true,
+                    cancelable: true,
+                    key: 'Enter',
+                    keyCode: 13,
+                    which: 13,
+                    shiftKey: false
+                });
+                editableDiv[0].dispatchEvent(enterEvent);
+                console.log("[CN_SendMessage] Simulated Enter key press without Shift");
+            }
+        } else {
+            console.log("No React props found on the editable div");
         }
-    }
 
-    // Focus on the textarea and simulate typing
-    textarea.focus();
-    var existingText = textarea.val();
-    var fullText = existingText ? existingText + ' ' + text : text;
-    var event = new Event('input', { bubbles: true });
-    textarea.val(fullText)[0].dispatchEvent(event);
+        // As a last resort, look for a send button and try to click it
+        var sendButton = jQuery("button[data-testid='send-button']");
+        if (sendButton.length) {
+            sendButton.prop('disabled', false);
+            sendButton.click();
+            console.log("[CN_SendMessage] Clicked send button");
+        }
+    }, 100);  // 100ms delay
 
-    // Adjust the height of the textarea
-    var rows = Math.ceil(fullText.length / 88);
-    var height = rows * 24;
-    textarea.css('height', height + 'px');
-
-  // Find the send button and enable it
-var sendButton = jQuery("[data-testid='send-button']"); 
-if (sendButton.length) {
-    sendButton.prop('disabled', false); // Force enable
-    sendButton.removeAttr('disabled').removeClass('disabled');
-
-    // Ensure the button is enabled and click it
-    if (!sendButton.is(':disabled')) {
-        sendButton[0].click(); // Attempt to click using DOM API
-        console.log("[CN_SendMessage] Automatically clicking the send button.");
-    } else {
-        console.log("[CN_SendMessage] The send button is enabled but could not be clicked.");
-    }
-} else {
-    console.error("[CN_SendMessage] Send button not found.");
-}
-
-
-    // Additional logic for speech recognition, if applicable
+    // Rest of the function remains the same
     if (CN_SPEECHREC) {
         clearTimeout(CN_TIMEOUT_KEEP_SPEECHREC_WORKING);
         CN_SPEECHREC.stop();
     } else {
-        // Continue speech recognition
         clearTimeout(CN_TIMEOUT_KEEP_SPEECHREC_WORKING);
         CN_TIMEOUT_KEEP_SPEECHREC_WORKING = setTimeout(CN_KeepSpeechRecWorking, 100);
     }
 }
-
 
 // Flash the red bar
 function CN_FlashRedBar() {
@@ -838,7 +868,7 @@ function CN_FlashRedBar() {
 		// Ignore
 	} else if (CN_BAR_COLOR_FLASH_GREY) {
 		// Grey? switch to red
-		setStatusBarBackground("red");
+		setStatusBarBackground("#FAA0A0");
 		CN_BAR_COLOR_FLASH_GREY = false;
 	} else {
 		// Anything else? switch to grey
@@ -899,7 +929,7 @@ function CN_StartSpeechRecognition() {
 	CN_SPEECHREC.lang = CN_WANTED_LANGUAGE_SPEECH_REC;
 	CN_SPEECHREC.onstart = () => {
 		// Make bar red
-		setStatusBarBackground("red");
+		setStatusBarBackground("#FAA0A0");
 		
 		CN_IS_LISTENING = true;
 		console.log("[SPEECH-REC] I'm listening");
@@ -1191,7 +1221,7 @@ function CN_StartTTGPT_Prompt() {
 	}
 	else {
 		// Never shown before. Show prompt
-		if (confirm("TALK-TO-CHATGPT - COMPATIBILITY INFO - PLEASE NOTE:\n" +
+		if (confirm("TalkGPT - COMPATIBILITY INFO - PLEASE NOTE:\n" +
 			"1) This extension will only work properly in Google Chrome Desktop or Microsoft Edge Desktop. " +
 			"It will NOT work on Brave, Opera, or mobile browsers. " +
 			"That's because it requires specific APIs/mechanisms which are NOT available in most browsers, " +
@@ -1309,10 +1339,10 @@ function CN_InitScript() {
 		
 			// Logo / title
 			"<div style='padding: 4px 30px; border-bottom: 1px solid grey;'>" +
-				"<a href='https://github.com/C-Nedelcu/talk-to-chatgpt' " +
+				"<a href='https://github.com/hoshizorista/talkgpt' " +
 					"style='display: inline-block; font-size: 16px; line-height: 80%; padding: 4px 0;' " +
-					"target=_blank title='Visit project website'>TALK-TO-ChatGPT<br />" +
-					"<div style='text-align: right; font-size: 11px; color: grey'>V2.9.0</div>" +
+					"target=_blank title='Visit project website'>TalkGPT<br />" +
+					"<div style='text-align: right; font-size: 11px; color: grey'>V1.13</div>" +
 				"</a>" +
 			"</div>" +
 			
@@ -1324,27 +1354,27 @@ function CN_InitScript() {
 					"<button style='border: 2px solid grey; padding: 3px 30px; margin: 4px; border-radius: 4px; opacity: 0.7;' id='CNStartButton' title='ALT+SHIFT+S'><i class=\"fa-solid fa-play\"></i>&nbsp;&nbsp;Start</button>"+
 				"</div>"+
 		
-				// Action buttons
-				"<div style='font-size: 16px; padding: 8px 4px; padding-bottom: 0px; display:none;' class='CNActionButtons'>" +
-					"<table width='100%' cellpadding=0 cellspacing=0><tr>" +
-						"<td width='24%' style='text-align: center;'>" +
-							"<span class='CNToggle' title='Voice recognition enabled. Click to disable. (Shortcut: ALT+SHIFT+H)' data-cn='micon' style='opacity: 0.7;'><i class=\"fa-solid fa-microphone\"></i></span>" + // Microphone enabled
-							"<span class='CNToggle' title='Voice recognition disabled. Click to enable. (Shortcut: ALT+SHIFT+H)' style='display:none; color: red; opacity: 0.7;' data-cn='micoff'><i class=\"fa-solid fa-microphone-slash\"></i></span>" + // Microphone disabled
-						"</td>"+
-						"<td width='1%' style='border-left: 1px solid grey; padding-left: 0 !important; padding-right: 0 !important; font-size: 1px; width: 1px;'>&nbsp;</td>"+
-						"<td width='24%' style='text-align: center;'>" +
-							"<span class='CNToggle' title='Text-to-speech (bot voice) enabled. Click to disable. This will skip the current message entirely. (Shortcut: ALT+SHIFT+V)' data-cn='speakon' style='opacity: 0.7;'><i class=\"fa-solid fa-volume-high\"></i></span>" + // Speak out loud
-							"<span class='CNToggle' title='Text-to-speech (bot voice) disabled. Click to enable. (Shortcut: ALT+SHIFT+V)' style='display:none; color: red; opacity: 0.7;' data-cn='speakoff'><i class=\"fa-solid fa-volume-xmark\"></i></span>  " + // Mute
-						"</td>"+
-						"<td width='1%' style='border-left: 1px solid grey; padding-left: 0 !important; padding-right: 0 !important; font-size: 1px; width: 1px;'>&nbsp;</td>" +
-						"<td width='24%' style='text-align: center;'>" +
-							"<span class='CNToggle' title='Skip the message currently being read by the bot. (Shortcut: ALT+SHIFT+L)' data-cn='skip' style='opacity: 0.7;'><i class=\"fa-solid fa-angles-right\"></i></span>" + // Skip
-						"</td>"+
-						"<td width='1%' style='border-left: 1px solid grey; padding-left: 0 !important; padding-right: 0 !important; font-size: 1px; width: 1px;'>&nbsp;</td>" +
-						"<td width='24%' style='text-align: center;'>" +
-							"<span class='CNToggle' title='Open settings menu to change bot voice, language, and other settings' data-cn='settings' style='opacity: 0.7;'><i class=\"fa-solid fa-sliders\"></i></span>" + // Settings
-						"</td>"+
-					"</tr></table>" +
+								// Action buttons
+								"<div style='font-size: 16px; padding: 8px 4px; padding-bottom: 0px; display:none;' class='CNActionButtons'>" +
+								"<table width='100%' cellpadding=0 cellspacing=0><tr>" +
+									"<td width='24%' style='text-align: center;'>" +
+										"<span class='CNToggle' title='Voice recognition enabled. Click to disable. (Shortcut: ALT+SHIFT+H)' data-cn='micon' style='opacity: 0.7;'><i class=\"fa-solid fa-microphone\"></i></span>" + // Microphone enabled
+										"<span class='CNToggle' title='Voice recognition disabled. Click to enable. (Shortcut: ALT+SHIFT+H)' style='display:none; color: red; opacity: 0.7;' data-cn='micoff'><i class=\"fa-solid fa-microphone-slash\"></i></span>" + // Microphone disabled
+									"</td>"+
+									"<td width='1%' style='border-left: 1px solid grey; padding-left: 0 !important; padding-right: 0 !important; font-size: 1px; width: 1px;'>&nbsp;</td>"+
+									"<td width='24%' style='text-align: center;'>" +
+										"<span class='CNToggle' title='Text-to-speech (bot voice) enabled. Click to disable. This will skip the current message entirely. (Shortcut: ALT+SHIFT+V)' data-cn='speakon' style='opacity: 0.7;'><i class=\"fa-solid fa-volume-high\"></i></span>" + // Speak out loud
+										"<span class='CNToggle' title='Text-to-speech (bot voice) disabled. Click to enable. (Shortcut: ALT+SHIFT+V)' style='display:none; color: red; opacity: 0.7;' data-cn='speakoff'><i class=\"fa-solid fa-volume-xmark\"></i></span>  " + // Mute
+									"</td>"+
+									"<td width='1%' style='border-left: 1px solid grey; padding-left: 0 !important; padding-right: 0 !important; font-size: 1px; width: 1px;'>&nbsp;</td>" +
+									"<td width='24%' style='text-align: center;'>" +
+										"<span class='CNToggle' title='Skip the message currently being read by the bot. (Shortcut: ALT+SHIFT+L)' data-cn='skip' style='opacity: 0.7;'><i class=\"fa-solid fa-angles-right\"></i></span>" + // Skip
+									"</td>"+
+									"<td width='1%' style='border-left: 1px solid grey; padding-left: 0 !important; padding-right: 0 !important; font-size: 1px; width: 1px;'>&nbsp;</td>" +
+									"<td width='24%' style='text-align: center;'>" +
+										"<span class='CNToggle' title='Open settings menu to change bot voice, language, and other settings' data-cn='settings' style='opacity: 0.7;'><i class=\"fa-solid fa-sliders\"></i></span>" + // Settings
+									"</td>"+
+								"</tr></table>" +
 					
 					// Colored bar - transparent by default, red when mic on, green when bot speaks
 					"<div style='padding-top: 12px; padding-bottom: 6px;'>" +
@@ -1404,6 +1434,11 @@ function CN_InitScript() {
 				.on('mousemove', handle_dragging);
 		});
 	}, 100);
+
+	if (localStorage.getItem('AutoStartTTGPT') === 'true') {
+		CN_StartTTGPT();  // Automatically start TTGPT if the checkbox was checked previously
+	}
+	
 	
 	// Start key detection
 	jQuery(document).on('keydown', function (e) {
@@ -1412,7 +1447,7 @@ function CN_InitScript() {
 		
 		// ALT+SHIFT+S: Start
 		if (e.altKey && e.shiftKey && e.which === 83) {
-			console.log('[KEY] ALT+SHIFT+S pressed, starting Talk-To-ChatGPT');
+			console.log('[KEY] ALT+SHIFT+S pressed, starting TalkGPT');
 			CN_StartTTGPT();
 		}
 		
@@ -1464,8 +1499,8 @@ function CN_OnSettingsIconClick() {
 	
 	// A short text at the beginning
 	var desc = "<div style='text-align: left; margin: 8px;'>" +
-		"<a href='https://github.com/C-Nedelcu/talk-to-chatgpt/wiki/Status-page' target=_blank style='font-size: 16px; color: orange;'>If something doesn't appear to work, click here for status and troubleshooting</a>." +
-		"<br />Thank you for not instantly posting a 1-star review on the extension store if something doesn't work as expected :-) This is a free program I do in my spare time and I appreciate constructive criticism. Make sure to tell me what's wrong and I will look into it." +
+		"<a href='https://github.com/hoshizorista/talkgpt' target=_blank style='font-size: 16px; color: orange;'>Click here to check the repository for updates if something isn't working</a>." +
+		"<br />TalkGPT is based off Talk-To-Chatgpt, I am mantaining this extension by myself, please donate if you find the extension helpful!" +
 		"</div>";
 	
 	// Prepare settings row
@@ -1494,48 +1529,50 @@ function CN_OnSettingsIconClick() {
 			languages += "<option value='"+languageCode+"' "+SEL+">"+languageName+" - "+languageCode+"</option>";
 		}
 	}
-	rows += "<tr><td style='white-space: nowrap'>Speech recognition language:</td><td><select id='TTGPTRecLang' style='width: 250px; padding: 2px; color: black;' >"+languages+"</select></td></tr>";
-	
-	rows += "<tr class='CNBrowserTTS' id='CNBrowserTTS0'><td style='white-space: nowrap'>AI voice and language:</td><td><select id='TTGPTVoice' style='width: 250px; padding: 2px; color: black'>" + voices + "</select></td></tr>";
-	
+	rows += "<tr><td style='white-space: nowrap; color: white;'>Speech recognition language:</td><td><select id='TTGPTRecLang' style='width: 250px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;'>" + languages + "</select></td></tr>";
+
+	rows += "<tr class='CNBrowserTTS' id='CNBrowserTTS0'><td style='white-space: nowrap; color: white;'>AI voice and language:</td><td><select id='TTGPTVoice' style='width: 250px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;'>" + voices + "</select></td></tr>";
 	// 2. AI talking speed
-	rows += "<tr class='CNBrowserTTS' id='CNBrowserTTS1'><td style='white-space: nowrap'>AI talking speed (speech rate):</td><td><input type=number step='.1' id='TTGPTRate' style='color: black; padding: 2px; width: 100px;' value='" + CN_TEXT_TO_SPEECH_RATE + "' /></td></tr>";
+    rows += "<tr class='CNBrowserTTS' id='CNBrowserTTS1'><td style='white-space: nowrap; color: white;'>AI talking speed (speech rate):</td><td><input type=number step='.1' id='TTGPTRate' style='color: white; background-color: #333; border: 1px solid #777; padding: 5px; width: 100px; border-radius: 4px;' value='" + CN_TEXT_TO_SPEECH_RATE + "' /></td></tr>";
 	
 	// 3. AI voice pitch
-	rows += "<tr class='CNBrowserTTS' id='CNBrowserTTS2'><td style='white-space: nowrap'>AI voice pitch:</td><td><input type=number step='.1' id='TTGPTPitch' style='width: 100px; padding: 2px; color: black;' value='" + CN_TEXT_TO_SPEECH_PITCH + "' /></td></tr>";
+	rows += "<tr class='CNBrowserTTS' id='CNBrowserTTS2'><td style='white-space: nowrap; color: white;'>AI voice pitch:</td><td><input type=number step='.1' id='TTGPTPitch' style='width: 100px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' value='" + CN_TEXT_TO_SPEECH_PITCH + "' /></td></tr>";
+	
+	// GPT voice
+	rows += "<tr><td style='white-space: nowrap; color: white;'>GPT-Default Voice:</td><td><input type='checkbox' id='TTGPTAutoClickVoiceButtons' " + (CN_AUTO_CLICK_VOICE_BUTTONS ? "checked='checked'" : "") + " /> <label for='TTGPTAutoClickVoiceButtons' style='color: #ccc;'>NOTE: Use default GPT voices, streaming default GPT voices is not possible on ChatGPT desktop, messages will need to be rendered to be played</label></td></tr>";
 
+	//AutoStart
+	rows += "<tr><td style='white-space: nowrap; color: white;'>Auto-Start extension:</td><td><input type='checkbox' id='CN_AutoStartTTGPT' style='border: 1px solid #777; padding: 5px;' " + (localStorage.getItem('AutoStartTTGPT') === 'true' ? "checked" : "") + " /></td></tr>";
+
+	
 	// 4. ElevenLabs
-	rows += "<tr><td style='white-space: nowrap'>ElevenLabs text-to-speech:</td><td><input type=checkbox id='TTGPTElevenLabs' " + (CN_TTS_ELEVENLABS ? "checked=checked" : "") + " /> <label for='TTGPTElevenLabs'> Use ElevenLabs API for text-to-speech (tick this to reveal additional settings)</label></td></tr>";
+    rows += "<tr><td style='white-space: nowrap; color: white;'>ElevenLabs text-to-speech:</td><td><input type=checkbox id='TTGPTElevenLabs' " + (CN_TTS_ELEVENLABS ? "checked=checked" : "") + " /> <label for='TTGPTElevenLabs' style='color: white;'> Use ElevenLabs API for text-to-speech</label></td></tr>";
 	
 	// 5. ElevenLabs API key
-	rows += "<tr class='CNElevenLabs' style='display: none;'><td style='white-space: nowrap'>ElevenLabs API Key:</td><td><input type=text style='width: 250px; padding: 2px; color: black;' id='TTGPTElevenLabsKey' value=\"" + (CN_TTS_ELEVENLABS_APIKEY) + "\" /></td></tr>";
+	rows += "<tr class='CNElevenLabs' style='display: none;'><td style='white-space: nowrap; color: white;'>ElevenLabs API Key:</td><td><input type=text style='width: 250px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' id='TTGPTElevenLabsKey' value=\"" + (CN_TTS_ELEVENLABS_APIKEY) + "\" /></td></tr>";
 	
 	// 6. ElevenLabs voice
-	rows += "<tr class='CNElevenLabs' style='display: none;'><td style='white-space: nowrap'>ElevenLabs voice:</td><td><select id='TTGPTElevenLabsVoice' style='width: 250px; padding: 2px; color: black;' >" + "</select> <span style='cursor: pointer; text-decoration: underline;' id='TTGPTElevenLabsRefresh' title='This will refresh the list of voices using your API key'>Refresh list</span></span></td></tr>";
+	rows += "<tr class='CNElevenLabs' style='display: none;'><td style='white-space: nowrap; color: white;'>ElevenLabs voice:</td><td><select id='TTGPTElevenLabsVoice' style='width: 250px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;'> " + "< </select> <span style='cursor: pointer; text-decoration: underline; color: #ffcc00;' id='TTGPTElevenLabsRefresh' title='Refresh voice list'>Refresh list</span></td></tr>";
 	
 	// 7. ElevenLabs settings
-	rows += "<tr class='CNElevenLabs' style='display: none;'><td style='white-space: nowrap'>ElevenLabs settings:</td>" +
-		"<td>" +
-		"Stability: <input type=number style='width: 100px; padding: 2px; color: black;' step='0.01' min='0' max='1' id='TTGPTElevenLabsStability' value=\"" + (CN_TTS_ELEVENLABS_STABILITY) + "\" />" +
-		"Similarity: <input type=number style='width: 100px; padding: 2px; color: black;' step='0.01' min='0' max='1' id='TTGPTElevenLabsSimilarity' value=\"" + (CN_TTS_ELEVENLABS_SIMILARITY) + "\" />" +
-		"<br />Leave blank for default, or set a number between 0 and 1 (example: 0.75)"
-		"</td></tr>";
+	rows += "<tr class='CNElevenLabs' style='display: none;'><td style='white-space: nowrap; color: white;'>ElevenLabs settings:</td>" +
+"<td>Stability: <input type=number style='width: 100px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' step='0.01' min='0' max='1' id='TTGPTElevenLabsStability' value=\"" + (CN_TTS_ELEVENLABS_STABILITY) + "\" />" +
+" Similarity: <input type=number style='width: 100px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' step='0.01' min='0' max='1' id='TTGPTElevenLabsSimilarity' value=\"" + (CN_TTS_ELEVENLABS_SIMILARITY) + "\" /></td></tr>";
 	
 	// 7. ElevenLabs warning
-	rows += "<tr class='CNElevenLabs' style='display: none;'><td colspan=2>Warning: the ElevenLabs API is experimental. It doesn't work with every language, make sure you check the list of supported language from their website. We will keep up with ElevenLabs progress to ensure all ElevenLabs API functionality is available in Talk-to-ChatGPT.</td></tr>";
+	rows += "<tr class='CNElevenLabs' style='display: none;'><td colspan=2>ElevenLabs might not fully support some specific languages just yet due to the current API limitations, but I’m keeping an eye on updates! If you run into any issues, just give me a shout and I’ll do my best to help!.</td></tr>";
 
 	// Azure text-to-speech
 	rows += "<tr><td style='white-space: nowrap'>Azure text-to-speech:</td><td><input type=checkbox id='TTGPTAzureTTS' " + (CN_TTS_AZURE ? "checked=checked" : "") + " /> <label for='TTGPTAzureTTS'> Use Azure API for text-to-speech (tick this to reveal additional settings)</label></td></tr>";
 
 	// Azure voice with refresh button
-	rows += "<tr class='CNAzureTTS' style='display: none;'><td style='white-space: nowrap'>Azure voice:</td><td><select id='TTGPTAzureVoice' style='width: 250px; padding: 2px; color: black;' ></select> <span style='cursor: pointer; text-decoration: underline;' id='TTGPTAzureRefresh' title='This will refresh the list of voices using your API key'>Refresh list</span></span></td></tr>";
-
+	rows += "<tr class='CNAzureTTS' style='display: none;'><td style='white-space: nowrap; color: #ccc;'>Azure voice:</td><td><select id='TTGPTAzureVoice' style='width: 250px; padding: 2px; color: #ccc; background-color: #222; border: 1px solid #555; border-radius: 4px;'></select> <span style='cursor: pointer; text-decoration: underline; color: #ffcc00;' id='TTGPTAzureRefresh' title='This will refresh the list of voices using your API key'>Refresh list</span></td></tr>";
 
 	// Azure API Key
-	rows += "<tr class='CNAzureTTS' style='display: none;'><td style='white-space: nowrap'>Azure API Key:</td><td><input type=text style='width: 250px; padding: 2px; color: black;' id='TTGPTAzureAPIKey' value=\"" + CN_TTS_AZURE_APIKEY + "\" /></td></tr>";
+	rows += "<tr class='CNAzureTTS' style='display: none;'><td style='white-space: nowrap; color: #ccc;'>Azure API Key:</td><td><input type=text style='width: 250px; padding: 2px; color: #ccc; background-color: #222; border: 1px solid #555; border-radius: 4px;' id='TTGPTAzureAPIKey' value=\"" + CN_TTS_AZURE_APIKEY + "\" /></td></tr>";
 
 	// Azure Region
-	rows += "<tr class='CNAzureTTS' style='display: none;'><td style='white-space: nowrap'>Azure Region:</td><td><input type=text style='width: 250px; padding: 2px; color: black;' id='TTGPTAzureRegion' value=\"" + CN_TTS_AZURE_REGION + "\" /></td></tr>";
+	rows += "<tr class='CNAzureTTS' style='display: none;'><td style='white-space: nowrap; color: #ccc;'>Azure Region:</td><td><input type=text style='width: 250px; padding: 2px; color: #ccc; background-color: #222; border: 1px solid #555; border-radius: 4px;' id='TTGPTAzureRegion' value=\"" + CN_TTS_AZURE_REGION + "\" /></td></tr>";
 
 	// Prepare save/close buttons
 	rows += "<tr><td colspan=2 style='text-align: center'><br />" +
@@ -1543,50 +1580,50 @@ function CN_OnSettingsIconClick() {
 		"<button class='TTGPTCancel' style='border: 2px solid grey; border-radius: 4px; padding: 6px 24px; margin-left: 40px; font-size: 18px; opacity: 0.7;'>✗ Cancel</button></td></tr></table>";
 	
 	// Header - vocal commands
-	rows += "</table><br /><h2>Voice control</h2><b>PLEASE NOTE! </b> These commands only work when the microphone is actively listening / when the speech-to-text functionality is active (indicated by a red bar). "+
-		"The system <i>cannot</i> listen to voice commands while the bot is speaking (green bar or grey bar) otherwise, it would be listening to itself and create an infinite feedback loop.<br />";
+	rows += "</table><br /><h2 style='color: #ccc; font-weight: 500; border-bottom: 1px solid #444;'>Voice control</h2><b style='color: #888;'>PLEASE NOTE! </b><span style='color: #666;'>These commands only work when the microphone is actively listening / when the speech-to-text functionality is active (indicated by a red bar). The system <i>cannot</i> listen to voice commands while the bot is speaking (green bar or grey bar), otherwise, it would be listening to itself and create an infinite feedback loop.</span><br />";
 	rows += "<table width='100%' cellpadding=6 cellspacing=2 style='margin-top: 15px;'>";
-	
+
 	// 5. 'Stop' word
-	rows += "<tr><td style='white-space: nowrap'>'Stop' word:</td><td><input type=text id='TTGPTStopWord' style='width: 100px; padding: 2px; color: black;' value='"+CN_SAY_THIS_WORD_TO_STOP+"' /></td></tr>";
-	
-	// 6. 'Pause' word
-	rows += "<tr><td style='white-space: nowrap'>'Pause' word:</td><td><input type=text id='TTGPTPauseWord' style='width: 100px; padding: 2px; color: black;' value='"+CN_SAY_THIS_WORD_TO_PAUSE+"' /></td></tr>";
+	rows += "<tr><td style='white-space: nowrap; color: #bbb;'>'Stop' word:</td><td><input type=text id='TTGPTStopWord' style='width: 100px; padding: 2px; color: #eee; background-color: #222; border: 1px solid #555;' value='"+CN_SAY_THIS_WORD_TO_STOP+"' /></td></tr>";
 
-	// 7. Keep listening until resume
-	rows += "<tr><td style='white-space: nowrap'>Keep listening when paused:</td><td><input type=checkbox id='TTGPTKeepListening' " + (CN_KEEP_LISTENING ? "checked=checked" : "") + " /> <label for='TTGPTKeepListening'>When paused, keep the microphone open, and resume conversation when the 'pause' word (defined above) is spoken</label></td></tr>";
-	
-	// 8. Autosend
-	rows += "<tr><td style='white-space: nowrap'>Automatic send:</td><td><input type=checkbox id='TTGPTAutosend' "+(CN_AUTO_SEND_AFTER_SPEAKING?"checked=checked":"")+" /> <label for='TTGPTAutosend'>Automatically send message to ChatGPT after speaking</label></td></tr>";
-	
-	// 9. Manual send word
-	rows += "<tr><td style='white-space: nowrap'>Manual send word(s):</td><td><input type=text id='TTGPTSendWord' style='width: 250px; padding: 2px; color: black;' value='" + CN_SAY_THIS_TO_SEND + "' /><span style='font-size: 10px;'>If 'automatic send' is disabled, you can trigger the sending of the message by saying this word (or sequence of words)</span></td></tr>";
+// 6. 'Pause' word
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>'Pause' word:</td><td><input type=text id='TTGPTPauseWord' style='width: 100px; padding: 2px; color: #eee; background-color: #222; border: 1px solid #555;' value='"+CN_SAY_THIS_WORD_TO_PAUSE+"' /></td></tr>";
 
-	// Prepare save/close buttons
-	rows += "<tr><td colspan=2 style='text-align: center'><br />" +
-		"<button class='TTGPTSave' style='border: 2px solid grey; border-radius: 4px; padding: 6px 24px; font-size: 18px; font-weight: bold; opacity: 0.7;'>✓ Save</button>&nbsp;" +
-		"<button class='TTGPTCancel' style='border: 2px solid grey; border-radius: 4px; padding: 6px 24px; margin-left: 40px; font-size: 18px; opacity: 0.7;'>✗ Cancel</button></td></tr></table>";
-	
-	// Header - advanced options
-	rows += "</table><br /><h2>Advanced settings</h2>";
-	rows += "<table width='100%' cellpadding=6 cellspacing=2 style='margin-top: 15px;'>";
-	
-	// 10. Split sentences with commas
-	rows += "<tr><td style='white-space: nowrap'>Punctuation in sentences:</td><td><input type=checkbox id='TTGPTIgnoreCommas' " + (CN_IGNORE_COMMAS ? "checked=checked" : "") + " /> <label for='TTGPTIgnoreCommas'>Don't use commas/semicolons/etc. to break down replies into sentences</label></td></tr>";
-	
-	// 11. Ignore code blocks
-	rows += "<tr><td style='white-space: nowrap'>Ignore code blocks:</td><td><input type=checkbox id='TTGPTIgnoreCode' " + (CN_IGNORE_CODE_BLOCKS ? "checked=checked" : "") + " /> <label for='TTGPTIgnoreCode'>Don't read blocks of code out loud (ignore them altogether)</label></td></tr>";
-	
-	// 12. AI Speak Emojis or not
-	rows += "<tr><td style='white-space: nowrap'>AI Speak Emojis:</td><td><input type=checkbox id='TTGPTSpeakEmojis' " + (CN_SPEAK_EMOJIS ? "checked=checked" : "") + " /> <label for='TTGPTSpeakEmojis'> Allow the bot to describe emojis (e.g. 'smiling face with heart eyes')</label> <span style='font-size: 10px;'>This setting doesn't apply if you have the ElevenLabs text-to-speech enabled (ElevenLabs ignores emojis)</span></td></tr>";
+// 7. Keep listening until resume
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>Keep listening when paused:</td><td><input type=checkbox id='TTGPTKeepListening' " + (CN_KEEP_LISTENING ? "checked=checked" : "") + " /> <label for='TTGPTKeepListening' style='color: #ccc;'>When paused, keep the microphone open, and resume conversation when the 'pause' word (defined above) is spoken</label></td></tr>";
 
-	// Keyboard shortcuts
-	rows += "<tr><td style='white-space: nowrap'>Keyboard shortcuts:</td><td><ul>" +
-		"<li>ALT+SHIFT+S: <u>S</u>tart Talk-To-ChatGPT</li>" +
-		"<li>ALT+SHIFT+H: suspend/resume speech recognition (<u>H</u>ush)</li>" +
-		"<li>ALT+SHIFT+V: suspend/resume bot's voice (<u>V</u>oice)</li>" +
-		"<li>ALT+SHIFT+L: skip current message (<u>L</u>eap)</li>" +
-		"</ul></td></tr>";
+// 8. Autosend
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>Automatic send:</td><td><input type=checkbox id='TTGPTAutosend' "+(CN_AUTO_SEND_AFTER_SPEAKING?"checked=checked":"")+" /> <label for='TTGPTAutosend' style='color: #ccc;'>Automatically send message to ChatGPT after speaking</label></td></tr>";
+
+// 9. Manual send word
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>Manual send word(s):</td><td><input type=text id='TTGPTSendWord' style='width: 250px; padding: 2px; color: #eee; background-color: #222; border: 1px solid #555;' value='" + CN_SAY_THIS_TO_SEND + "' /><span style='font-size: 10px; color: #777;'>If 'automatic send' is disabled, you can trigger the sending of the message by saying this word (or sequence of words)</span></td></tr>";
+
+// Prepare save/close buttons
+rows += "<tr><td colspan=2 style='text-align: center'><br />" +
+    "<button class='TTGPTSave' style='border: 1px solid #555; border-radius: 4px; padding: 6px 24px; font-size: 18px; font-weight: bold; background-color: #333; color: #ccc; opacity: 0.9;'>✓ Save</button>&nbsp;" +
+    "<button class='TTGPTCancel' style='border: 1px solid #555; border-radius: 4px; padding: 6px 24px; margin-left: 40px; font-size: 18px; background-color: #333; color: #ccc; opacity: 0.9;'>✗ Cancel</button></td></tr></table>";
+
+// Header - advanced options
+rows += "</table><br /><h2 style='color: #ccc; font-weight: 500; border-bottom: 1px solid #444;'>Advanced settings</h2>";
+rows += "<table width='100%' cellpadding=6 cellspacing=2 style='margin-top: 15px;'>";
+
+// 10. Split sentences with commas
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>Punctuation in sentences:</td><td><input type=checkbox id='TTGPTIgnoreCommas' " + (CN_IGNORE_COMMAS ? "checked=checked" : "") + " /> <label for='TTGPTIgnoreCommas' style='color: #ccc;'>Don't use commas/semicolons/etc. to break down replies into sentences</label></td></tr>";
+
+// 11. Ignore code blocks
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>Ignore code blocks:</td><td><input type=checkbox id='TTGPTIgnoreCode' " + (CN_IGNORE_CODE_BLOCKS ? "checked=checked" : "") + " /> <label for='TTGPTIgnoreCode' style='color: #ccc;'>Don't read blocks of code out loud (ignore them altogether)</label></td></tr>";
+
+// 12. AI Speak Emojis or not
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>AI Speak Emojis:</td><td><input type=checkbox id='TTGPTSpeakEmojis' " + (CN_SPEAK_EMOJIS ? "checked=checked" : "") + " /> <label for='TTGPTSpeakEmojis' style='color: #ccc;'>Allow the bot to describe emojis (e.g. 'smiling face with heart eyes')</label> <span style='font-size: 10px; color: #777;'>This setting doesn't apply if you have the ElevenLabs text-to-speech enabled (ElevenLabs ignores emojis)</span></td></tr>";
+
+// Keyboard shortcuts
+rows += "<tr><td style='white-space: nowrap; color: #bbb;'>Keyboard shortcuts:</td><td><ul style='color: #ccc;'>" +
+    "<li>ALT+SHIFT+S: <u>S</u>tart TalkGPT</li>" +
+    "<li>ALT+SHIFT+H: suspend/resume speech recognition (<u>H</u>ush)</li>" +
+    "<li>ALT+SHIFT+V: suspend/resume bot's voice (<u>V</u>oice)</li>" +
+    "<li>ALT+SHIFT+L: skip current message (<u>L</u>eap)</li>" +
+    "</ul></td></tr>";
+
 	
 	// Prepare save/close buttons
 	rows += "<tr><td colspan=2 style='text-align: center'><br />" +
@@ -1594,16 +1631,17 @@ function CN_OnSettingsIconClick() {
 		"<button class='TTGPTCancel' style='border: 2px solid grey; border-radius: 4px; padding: 6px 24px; margin-left: 40px; font-size: 18px; opacity: 0.7;'>✗ Cancel</button></td></tr></table>";
 	
 	// Add donations frame
-	var donations = "<br/><h2>Support the project</h2><p style='font-size: 15px; margin-top: 15px;'>Are you enjoying Talk-To-ChatGPT and want me to continue improving it? \n" +
-		"\t\t<b>You can help by making a donation to the project.</b> \n" +
-		"\t\tPlease click the button below to proceed.</p><br />\n" +
-		"\t\t<center><a target=_blank href='https://www.paypal.com/donate/?business=BZ43BM7XSSKKW&no_recurring=0&item_name=Are+you+enjoying+Talk-To-ChatGPT?+If+so%2C+consider+making+a+donation+to+keep+the+project+going%2C+and+I%27ll+continue+improving+it%21&currency_code=EUR'>\n" +
-		"\t\t\t<img src='https://edunext.com.sg/paypal.png' alt='' height=80 style='height: 80px;' />\n" +
+	var donations = "<br/><h2>Support this extension 💖</h2><p style='font-size: 15px; margin-top: 15px;'>If you find the extension helpful, please donate\n" +
+		"\t\t<b>your donation can help on mantaining and improving the project.</b> \n" +
+		"\t\tI do custom code and mods on commission, have any ideas? HMU! hoshizorista@gmail.com, discord: exile9904</p><br />\n" +
+		"\t\t<center><a target=_blank href='https://www.paypal.com/donate/?hosted_button_id=23PR5E7XSVK72'>\n" +
+		"\t\t\t<img src='https://data.textstudio.com/output/sample/animated/4/9/5/6/paypal-5-16594.gif' alt='' height=80 style='height: 80px;' />\n" +
+		"\t\t<b>click on the bouncy paypal logo to donate <3.</b> \n" +
 		"\t\t</a></center>";
 	
 	// Open a whole screenful of settings
 	jQuery("body").append("<div style='background: rgba(0,0,0,0.8); position: absolute; overflow-y: auto; top: 0; right: 0; left: 0; bottom: 0; z-index: 999999; padding: 20px; color: white; font-size: 13px;' id='TTGPTSettingsArea'>" +
-		"<div style='width: 600px; margin-left: auto; margin-right: auto; overflow-y: auto;'><h1>⚙️ Talk-to-ChatGPT settings</h1>"+desc+rows+donations+"</div></div>");
+		"<div style='width: 600px; margin-left: auto; margin-right: auto; overflow-y: auto;'><h1>TalkGPT 1.13</h1>"+desc+rows+donations+"</div></div>");
 	
 	// Assign events
 	setTimeout(function() {
@@ -1623,6 +1661,23 @@ function CN_OnSettingsIconClick() {
 				jQuery(".CNBrowserTTS").show();
 			}
 		});
+
+		// When the GPT voice option is changed
+		jQuery("#TTGPTAutoClickVoiceButtons").on("change", function() {
+			if (jQuery(this).prop("checked")) {
+				jQuery("#TTGPTAzureTTS").prop("checked", false).trigger("change");
+				jQuery("#TTGPTElevenLabs").prop("checked", false).trigger("change");
+				CNBrowserTTS0 = " "; // Set TTGPTVoice to an empty string
+				jQuery(".CNElevenLabs").hide();
+				jQuery(".CNBrowserTTS").hide();
+				CN_RefreshElevenLabsVoiceList(true);
+			}
+			else {
+				jQuery(".CNElevenLabs").show();
+				jQuery(".CNBrowserTTS").show();
+			}
+		});
+		
 		
 		// When the 'Refresh list' button is clicked
 		jQuery("#TTGPTElevenLabsRefresh").on("click", function() {
@@ -1733,10 +1788,14 @@ function CN_SaveSettings() {
 		// AI voice settings: voice/language, rate, pitch
 		var wantedVoiceIndex = jQuery("#TTGPTVoice").val();
 		var allVoices = speechSynthesis.getVoices();
+		var autoStartTTGPTChecked = jQuery("#CN_AutoStartTTGPT").prop("checked");
+		localStorage.setItem('AutoStartTTGPT', autoStartTTGPTChecked ? 'true' : 'false');
 		CN_WANTED_VOICE = allVoices[wantedVoiceIndex];
 		CN_WANTED_VOICE_NAME = CN_WANTED_VOICE ? CN_WANTED_VOICE.lang+"-"+CN_WANTED_VOICE.name : "";
 		CN_TEXT_TO_SPEECH_RATE = Number( jQuery("#TTGPTRate").val() );
 		CN_TEXT_TO_SPEECH_PITCH = Number( jQuery("#TTGPTPitch").val() );
+		CN_AUTO_CLICK_VOICE_BUTTONS = document.getElementById('TTGPTAutoClickVoiceButtons').checked;
+
 		
 		// Speech recognition settings: language, stop, pause
 		CN_WANTED_LANGUAGE_SPEECH_REC = jQuery("#TTGPTRecLang").val();
@@ -1794,11 +1853,19 @@ function CN_SaveSettings() {
 			CN_TTS_ELEVENLABS_SIMILARITY,
 			CN_SPEAK_EMOJIS?1:0,
 			CN_TTS_AZURE?1:0,
+			CN_AUTO_CLICK_VOICE_BUTTONS?1:0,
 			CN_TTS_AZURE_APIKEY,
 			CN_TTS_AZURE_REGION,
 			CN_TTS_AZURE_VOICE
 		];
 		CN_SetCookie("CN_TTGPT", JSON.stringify(settings));
+		if (CN_AUTO_CLICK_VOICE_BUTTONS) {
+			CN_StartVoiceButtonAutoClick();
+			jQuery(".CNBrowserTTS").hide();
+		  } else {
+			CN_StopVoiceButtonAutoClick();
+			jQuery(".CNBrowserTTS").show();
+		  }
 	} catch(e) { alert('Invalid settings values. '+e.toString()); return; }
 	
 	// Close dialog
@@ -1837,12 +1904,171 @@ function CN_RestoreSettings() {
 			if (settings.hasOwnProperty(18)) CN_TTS_AZURE_APIKEY = settings[18];
 			if (settings.hasOwnProperty(19)) CN_TTS_AZURE_REGION = settings[19];
 			if (settings.hasOwnProperty(20)) CN_TTS_AZURE_VOICE = settings[20];
+			if (settings.hasOwnProperty(21)) CN_AUTO_CLICK_VOICE_BUTTONS = settings[21] == 1;
 			
 		}
+		if (CN_AUTO_CLICK_VOICE_BUTTONS) {
+			CN_StartVoiceButtonAutoClick();
+		  }
 	} catch (ex) {
 		console.error(ex);
 	}
 }
+
+var CN_VoiceButtonObserver = null;
+
+function CN_StartVoiceButtonAutoClick() {
+    // If the observer already exists, disconnect it first
+    CN_StopVoiceButtonAutoClick();
+
+    // Function to click the last available button on page load
+    function clickLastButton() {
+        console.log('Attempting to click the last available button on page load');
+        const buttons = document.querySelectorAll('button[data-testid="voice-play-turn-action-button"]');
+        console.log('Number of buttons found on load:', buttons.length);
+        if (buttons.length > 0) {
+            const lastButton = buttons[buttons.length - 1];
+            console.log('Clicking last button:', lastButton);
+
+            // Stop speech recognition before playback
+            if (CN_SPEECHREC && CN_IS_LISTENING) {
+                CN_SPEECHREC.stop();
+                CN_IS_LISTENING = false;
+                console.log('Speech recognition stopped before playback.');
+            }
+
+            // Set status bar to green (playing)
+            setStatusBarBackground("green");
+
+            // Click the button to start playback
+            lastButton.click();
+
+            // Add an event listener to detect when playback ends
+            monitorPlaybackEnd();
+        } else {
+            console.log('No buttons found on load');
+        }
+    }
+
+    // Function to monitor playback end
+    function monitorPlaybackEnd() {
+        // Select the audio element
+        const audioElement = document.querySelector('audio');
+
+        if (audioElement) {
+            console.log('Audio element found, adding ended event listener.');
+
+            // Add an event listener for the 'ended' event
+            audioElement.addEventListener('ended', onPlaybackEnded);
+
+            // Also handle if playback is paused or stopped
+            audioElement.addEventListener('pause', onPlaybackEnded);
+        } else {
+            console.log('Audio element not found.');
+        }
+
+        function onPlaybackEnded() {
+            console.log('Playback ended.');
+
+            // Remove the event listeners to avoid multiple triggers
+            audioElement.removeEventListener('ended', onPlaybackEnded);
+            audioElement.removeEventListener('pause', onPlaybackEnded);
+
+            // Set status bar to red (recording)
+            setStatusBarBackground("#FAA0A0"); // Red color
+
+            // Start speech recognition after playback ends
+            if (CN_SPEECHREC && !CN_IS_LISTENING && !CN_SPEECHREC_DISABLED && !CN_IS_READING) {
+                try {
+                    CN_SPEECHREC.start();
+                    CN_IS_LISTENING = true;
+                    console.log('Speech recognition started after playback.');
+                } catch (error) {
+                    console.error('Failed to start speech recognition:', error);
+                }
+            }
+        }
+    }
+
+    // Click the last button when the DOM is fully loaded
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        // Document is already ready
+        clickLastButton();
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM fully loaded and parsed');
+            clickLastButton();
+        });
+    }
+
+    // Observer to automatically click new buttons that appear
+    CN_VoiceButtonObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Element node
+                    if (node.matches && node.matches('button[data-testid="voice-play-turn-action-button"]')) {
+                        console.log('New button added:', node);
+
+                        // Stop speech recognition before playback
+                        if (CN_SPEECHREC && CN_IS_LISTENING) {
+                            CN_SPEECHREC.stop();
+                            CN_IS_LISTENING = false;
+                            console.log('Speech recognition stopped before playback.');
+                        }
+
+                        // Set status bar to green (playing)
+                        setStatusBarBackground("green");
+
+                        node.click();
+
+                        // Monitor when playback ends
+                        monitorPlaybackEnd();
+                    } else if (node.querySelectorAll) {
+                        // In case the button is nested within added nodes
+                        const nestedButtons = node.querySelectorAll('button[data-testid="voice-play-turn-action-button"]');
+                        if (nestedButtons.length > 0) {
+                            console.log('Nested buttons found in added node:', nestedButtons.length);
+                            nestedButtons.forEach((btn) => {
+                                console.log('Clicking nested button:', btn);
+
+                                // Stop speech recognition before playback
+                                if (CN_SPEECHREC && CN_IS_LISTENING) {
+                                    CN_SPEECHREC.stop();
+                                    CN_IS_LISTENING = false;
+                                    console.log('Speech recognition stopped before playback.');
+                                }
+
+                                // Set status bar to green (playing)
+                                setStatusBarBackground("green");
+
+                                btn.click();
+
+                                // Monitor when playback ends
+                                monitorPlaybackEnd();
+                            });
+                        }
+                    }
+                }
+            });
+        });
+    });
+
+    // Start observing the document body for added nodes
+    CN_VoiceButtonObserver.observe(document.body, { childList: true, subtree: true });
+    console.log('Voice Button Mutation observer set up');
+}
+
+  
+
+
+function CN_StopVoiceButtonAutoClick() {
+  if (CN_VoiceButtonObserver) {
+    CN_VoiceButtonObserver.disconnect();
+    CN_VoiceButtonObserver = null;
+    console.log('Voice Button Mutation observer disconnected');
+  }
+}
+
 
 // Close dialog: remove area altogether
 function CN_CloseSettingsDialog() {
@@ -1967,7 +2193,7 @@ function CN_RefreshElevenLabsVoiceList(useKeyFromTextField) {
 	
 	setTimeout(function() {
 		typeof jQuery == "undefined" ?
-			alert("[Talk-to-ChatGPT] Sorry, but jQuery was not able to load. The script cannot run. Try using Google Chrome or Edge on Windows 11") :
+			alert("[TalkGPT] Sorry, but jQuery was not able to load. The script cannot run. Try using Google Chrome or Edge on Windows 11") :
 			CN_CheckCorrectPage();
 	}, 500);
 

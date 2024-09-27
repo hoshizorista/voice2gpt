@@ -1,111 +1,85 @@
 <style>
-	a, a:visited { color: white; }
-</style>
-
-<div style="background: #41464c; color: white; padding: 20px; padding-top: 5px; width: 600px; text-align: justify;">
-
-	<h1><img src='https://edunext.com.sg/ttgpt.png' alt='' height=32 style='float: left; height: 32px; margin-right: 5px;' /> TALK-TO-ChatGPT</h1>
+	a, a:visited { color: #FFD700; text-decoration: none; }
+	a:hover { color: #FFA500; }
+	body {
+	  font-family: 'Roboto', sans-serif;
+	  background: #2B2F33;
+	  color: white;
+	  padding: 20px;
+	}
+	h1 {
+	  font-size: 1.5em;
+	  margin-bottom: 15px;
+	  border-bottom: 2px solid #FFD700;
+	  padding-bottom: 10px;
+	}
+	p {
+	  font-size: 1.1em;
+	  line-height: 1.6;
+	}
+	.container {
+	  max-width: 600px;
+	  margin: auto;
+	  padding: 20px;
+	  background-color: #3A3F44;
+	  border-radius: 12px;
+	}
+	img {
+	  border-radius: 5px;
+	}
+	hr {
+	  border: 0;
+	  height: 1px;
+	  background: #FFD700;
+	  margin: 20px 0;
+	}
+	.button {
+	  background-color: #FFD700;
+	  color: #2B2F33;
+	  padding: 10px 15px;
+	  border-radius: 8px;
+	  text-align: center;
+	  display: inline-block;
+	  margin-top: 15px;
+	}
+	.button:hover {
+	  background-color: #FFA500;
+	}
+  </style>
+  
+  <div class="container">
+  
+	<h1><img src='https://edunext.com.sg/ttgpt.png' alt='' height=32 /> TALK-TO-ChatGPT</h1>
 	
-	<p>
-		<b>To start using this extension, 
-		you need to open the <a href='https://chatgpt.com' target=_blank>ChatGPT home page</a></b>.
-		
-		Once you are logged in, a box will display at the top right corner of your screen with a 'START' button.
-		Click START to start talking.
-	</p>
-		
-	<p>
-		This extension allows you to talk to ChatGPT with your microphone, using your browser's voice recognition API.
-		Then, when your browser receives the reply, it is read out loud with a voice of your choosing.
-		<br /><br />
-		&bullet; When the box's bottom border is <b style='border-bottom: 3px solid red'>red</b>, your microphone is listening<br />
-		&bullet; When the box's bottom border is <b style='border-bottom: 3px solid green'>green</b>, the bot is talking<br />
-		&bullet; Access the settings by clicking the settings icon: change voice/language, bot talking speed, and more.
-	</p>
-
-	<p>
-		<a href='https://github.com/C-Nedelcu/talk-to-chatgpt/wiki/Status-page' target=_blank style='font-size: 16px; color: orange;'>If something doesn't appear to work, click here for status and troubleshooting</a>.
-		Thank you for not instantly posting a 1-star review on the extension store if something doesn't work as expected :-) This is a free program I do in my spare time and I appreciate constructive criticism. Make sure to tell me what's wrong and I will look into it.
-	</p>
-
+	<p><b>To start using this extension, you need to open the <a href='https://chatgpt.com' target=_blank>ChatGPT home page</a>.</b> Once logged in, a box will appear at the top right with a 'START' button. Click START to begin.</p>
 	
+	<p>This extension allows you to talk to ChatGPT using your microphone with the browser's voice recognition API. When the bot responds, the reply is read aloud with a voice of your choice.</p>
+	<ul>
+	  <li>When the box's bottom border is <b style='border-bottom: 3px solid red'>red</b>, the microphone is listening.</li>
+	  <li>When the box's bottom border is <b style='border-bottom: 3px solid green'>green</b>, the bot is talking.</li>
+	  <li>Access settings by clicking the gear icon to change voice/language, speed, and more.</li>
+	</ul>
+  
+	<p><a href='https://github.com/hoshizorista/talkgpt' target=_blank class="button">Check GitHub Repo for Troubleshooting</a> Feel free to contribute to the project!</p>
+  
 	<hr />
-	
+  
 	<h1>Credits</h1>
-	
-	<a target=_blank 
-			style='float: right; '
-			href='https://www.paypal.com/donate/?business=BZ43BM7XSSKKW&no_recurring=0&item_name=Are+you+enjoying+Talk-To-ChatGPT?+If+so%2C+consider+making+a+donation+to+keep+the+project+going%2C+and+I%27ll+continue+improving+it%21&currency_code=EUR'>
-			<img src='https://edunext.com.sg/paypal.png' alt='' height=50 />
-		</a>
-		
-	<p>
-		Author: C. Nedelcu<br />
-		GUI: pixelsoda, S. James<br />
-		Icons: FontAwesome
-	</p>
-
-	<p>
-		Project home page and source code: <a href='https://github.com/C-Nedelcu/talk-to-chatgpt' target=_blank>GitHub</a><br />
-		Demontration video on Youtube: <a href='https://www.youtube.com/watch?v=gnijfWuenKA' target=_blank>click here</a>
-	</p>
-	
-	<p>
-		<b>Donations</b><br />
-		Are you enjoying Talk-To-ChatGPT and want me to continue improving it? 
-		You can help by making a donation to the project. 
-		Please click the Donate button to proceed.
-	</p>
-	
+	<p>Done by: Hoshizorista<br />Based on work by: C. Nedelcu<br /><br />Icons: FontAwesome</p>
+	<p>Project home page and source code: <a href='https://github.com/hoshizorista/talkgpt' target=_blank>GitHub</a><br />Demonstration video: <a href='https://www.youtube.com/watch?v=gnijfWuenKA' target=_blank>YouTube</a></p>
+  
 	<hr />
-
+  
 	<h1>Having trouble getting it to work?</h1>
+	<p><b>Issues with the extension?</b> Check the <a href='https://github.com/hoshizorista/talkgpt' target=_blank>project page</a> for the latest updates. OpenAI updates can sometimes break the extension, but I'll fix it quickly.</p>
+  
+	<ul>
+	  <li>This extension is designed for Chromium-based desktop browsers. If it doesn’t work in your browser, it's because the necessary APIs aren't supported.</li>
+	  <li>If voice recognition doesn’t work, check this <a href='https://www.google.com/intl/en/chrome/demos/speech.html' target=_blank>test page</a>.</li>
+	  <li>If the bot's voice is scrambled, change the voice settings or restart the browser to reset Chromium’s voice API bug.</li>
+	</ul>
+  
+	<p>If your issue isn't listed, visit the <a href='https://github.com/hoshizorista/talkgpt' target=_blank>GitHub Issues tab</a> for more support.</p>
 	
-	<p>
-		<b>Is the extension no longer working for you? 
-		The box isn't appearing where it should, 
-		or something appears to be off?</b>
-		<a href='https://github.com/C-Nedelcu/talk-to-chatgpt' target=_blank>Make sure to check the project page for the latest status information</a>.
-		Sometimes OpenAI update their user interface and break the extension, but I can usually get it fixed quickly.
-	</p>
-	
-	<p>
-		1. This extension is only designed for Chromium-based desktop browsers such as Google Chrome or Microsoft Edge. 
-		If it doesn't work in your specific browser, it's because your browser doesn't support the necessary APIs. 
-		There is no need to contact us to add support to another browser, we can't do anything about it. 
-		Support for these APIs must be implemented by the browser itself.
-		<br /><br />
-		
-		2. What to do if the computer isn't recognizing text when you speak? 
-			Did you make sure to give permission to use your microphone?
-			Is the microphone recording volume high enough?
-			Check this 
-			<a href='https://www.google.com/intl/en/chrome/demos/speech.html' target=_blank>speech recognition test page</a>.
-			If the speech recognition isn't working on that page, then it won't work on Talk-to-ChatGPT.
-			Also, for Mac users, make sure your laptop's lid isn't in a closed state 
-			(because of <a href='https://thehackernews.com/2018/10/apple-macbook-microphone.html' target=_blank>this</a>).
-			
-		<br /><br />
-
-		3. What to do if the bot's voice is scrambled, jammed, or not working at all?
-			Try opening the settings and changing the bot's voice to a different option. Also make sure the talking speed is set to 1.
-			Sometimes, voices listed in the text-to-speech API don't work correctly, for some reason.
-			
-		<br /><br />
-		
-		4. What if it worked well for a bit, and suddenly nothing works correctly anymore? 
-		In that case, try restarting your browser. 
-		There is sometimes <a href='https://stackoverflow.com/questions/21947730/chrome-speech-synthesis-with-longer-texts'>a bug with Chromium's voice API</a>,
-		when the bug occurs, it can completely jam the API until you restart your browser.
-		
-		
-		<br /><br />
-		
-		5. Do you have another problem that isn't listed here?
-		Please visit the <a href='https://github.com/C-Nedelcu/talk-to-chatgpt' target=_blank>project page</a>,
-		read the FAQ section, and if you answer still isn't in there, 
-		please ask your questions by clicking on the 'Issues' tab at the top of the page.
-		<br />
-		
-	</p>
-</div>
+  </div>
+  
