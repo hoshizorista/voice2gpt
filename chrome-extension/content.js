@@ -799,15 +799,17 @@ function CN_SendMessage(text) {
     // Focus on the div
     editableDiv.focus();
 
-    // Insert the text into the div
-    document.execCommand('insertText', false, text);
+    // Insert the text into the div only if provided
+    if (text) {
+        document.execCommand('insertText', false, text);
 
-    // Dispatch input and change events
-    var inputEvent = new Event('input', { bubbles: true });
-    editableDiv[0].dispatchEvent(inputEvent);
+        // Dispatch input and change events when text is inserted
+        var inputEvent = new Event('input', { bubbles: true });
+        editableDiv[0].dispatchEvent(inputEvent);
 
-    var changeEvent = new Event('change', { bubbles: true });
-    editableDiv[0].dispatchEvent(changeEvent);
+        var changeEvent = new Event('change', { bubbles: true });
+        editableDiv[0].dispatchEvent(changeEvent);
+    }
 
     // Add a small delay before attempting to send
     setTimeout(() => {
@@ -1040,16 +1042,16 @@ function CN_StartSpeechRecognition() {
 				return;
 			}
 			
-			console.log("[SEND-WORD] You said '"+ CN_SAY_THIS_TO_SEND+"' - the message will be sent");
-			
-			// Click button
-			jQuery("#prompt-textarea").closest("div").find("button:last").click();
-		
-			// Stop speech recognition until the answer is received
-			if (CN_SPEECHREC) {
-				clearTimeout(CN_TIMEOUT_KEEP_SPEECHREC_WORKING);
-				CN_SPEECHREC.stop();
-			}
+                        console.log("[SEND-WORD] You said '"+ CN_SAY_THIS_TO_SEND+"' - the message will be sent");
+
+                        // Send the current message in the textarea
+                        CN_SendMessage();
+
+                        // Stop speech recognition until the answer is received
+                        if (CN_SPEECHREC) {
+                                clearTimeout(CN_TIMEOUT_KEEP_SPEECHREC_WORKING);
+                                CN_SPEECHREC.stop();
+                        }
 			
 			return;
 		}
