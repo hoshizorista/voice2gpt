@@ -17,7 +17,7 @@ Forked and updated with contributions from community, now compatible with the la
 
   With TalkGPT, users can speak to the AI and receive spoken responses, making the interaction feel more natural and conversational. It offers the experience of having your own personal assistant, similar to Iron Man's Jarvis. Beyond entertainment, it's a valuable tool for helping the elderly and people with disabilities interact with ChatGPT. 
 
-  We now support <strong>ElevenLabs API</strong> integration, enabling users to create custom voices for text-to-speech!
+We now support <strong>ElevenLabs API</strong> integration, enabling users to create custom voices for text-to-speech! You can select which <strong>ElevenLabs</strong> model produces the speech, for example <em>Eleven Flash&nbsp;2.5</em> for low latency or <em>Eleven Multilingual&nbsp;V2</em> for higher quality output.
 
   Once started, TalkGPT displays a menu on the top-right corner of the page where users can access settings (such as voice, language, and more), skip the current message, toggle voice recognition on or off, and toggle text-to-speech on or off.
 

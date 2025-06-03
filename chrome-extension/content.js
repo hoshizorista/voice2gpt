@@ -61,14 +61,18 @@ var CN_TTS_ELEVENLABS_VOICE = "";
 
 // Statically list ElevenLabs models (easier than to request from API)
 var CN_TTS_ELEVENLABS_MODELS = {
-	"eleven_monolingual_v1": "English only",
-	"eleven_multilingual_v2": "Multi-language (autodetect) V2",
-	"eleven_multilingual_v1": "Multi-language (autodetect) V1",
-	"eleven_english_sts_v2": "Eleven English v2",
-	"eleven_turbo_v2": "Eleven Turbo v2"
+        "eleven_monolingual_v1": "English only",
+        // High quality model supporting multiple languages
+        "eleven_multilingual_v2": "Eleven Multilingual V2 (high quality)",
+        "eleven_multilingual_v1": "Multi-language (autodetect) V1",
+        "eleven_english_sts_v2": "Eleven English v2",
+        // Low latency model previously known as Turbo/Flash
+        "eleven_turbo_v2": "Eleven Flash 2.5 (low latency)"
 };
 
 // Other ElevenLabs settings
+// Stability and similarity values are expected in the range 0-100
+// They will be converted to 0-1 before calling the API
 var CN_TTS_ELEVENLABS_STABILITY = "";
 var CN_TTS_ELEVENLABS_SIMILARITY = "";
 
@@ -450,10 +454,14 @@ function CN_ConvertTTSElevenLabs() {
 			"stability": 0,
 			"similarity_boost": 0
 		};
-		try {
-			voice_settings["stability"] = parseFloat(CN_TTS_ELEVENLABS_STABILITY);
-			voice_settings["similarity_boost"] = parseFloat(CN_TTS_ELEVENLABS_SIMILARITY);
-		} catch (e) {
+                try {
+                        voice_settings["stability"] = parseFloat(CN_TTS_ELEVENLABS_STABILITY);
+                        voice_settings["similarity_boost"] = parseFloat(CN_TTS_ELEVENLABS_SIMILARITY);
+
+                        // If values look like percentages, convert them
+                        if (voice_settings["stability"] > 1) voice_settings["stability"] /= 100;
+                        if (voice_settings["similarity_boost"] > 1) voice_settings["similarity_boost"] /= 100;
+                } catch (e) {
 			voice_settings = {
 				"stability": 0,
 				"similarity_boost": 0
@@ -1052,8 +1060,21 @@ function CN_StartSpeechRecognition() {
 			return;
 		}
 		
-		// Send the message
-		CN_SendMessage(final_transcript);
+                if (CN_AUTO_SEND_AFTER_SPEAKING) {
+                        // Send the message directly
+                        CN_SendMessage(final_transcript);
+                } else {
+                        // Only insert the text without sending
+                        var editableDiv = jQuery('#prompt-textarea[contenteditable="true"]');
+                        if (editableDiv.length) {
+                                editableDiv.focus();
+                                document.execCommand('insertText', false, final_transcript);
+                                var inputEvent = new Event('input', { bubbles: true });
+                                editableDiv[0].dispatchEvent(inputEvent);
+                                var changeEvent = new Event('change', { bubbles: true });
+                                editableDiv[0].dispatchEvent(changeEvent);
+                        }
+                }
 	};
 	if (!CN_IS_LISTENING && CN_SPEECH_REC_SUPPORTED && !CN_SPEECHREC_DISABLED && !CN_IS_READING) {
 		try {
@@ -1556,8 +1577,8 @@ function CN_OnSettingsIconClick() {
 	
 	// 7. ElevenLabs settings
 	rows += "<tr class='CNElevenLabs' style='display: none;'><td style='white-space: nowrap; color: white;'>ElevenLabs settings:</td>" +
-"<td>Stability: <input type=number style='width: 100px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' step='0.01' min='0' max='1' id='TTGPTElevenLabsStability' value=\"" + (CN_TTS_ELEVENLABS_STABILITY) + "\" />" +
-" Similarity: <input type=number style='width: 100px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' step='0.01' min='0' max='1' id='TTGPTElevenLabsSimilarity' value=\"" + (CN_TTS_ELEVENLABS_SIMILARITY) + "\" /></td></tr>";
+"<td>Stability: <input type=number style='width: 100px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' step='1' min='0' max='100' id='TTGPTElevenLabsStability' value=\"" + (CN_TTS_ELEVENLABS_STABILITY) + "\" />" +
+" Similarity: <input type=number style='width: 100px; padding: 5px; color: white; background-color: #333; border: 1px solid #777; border-radius: 4px;' step='1' min='0' max='100' id='TTGPTElevenLabsSimilarity' value=\"" + (CN_TTS_ELEVENLABS_SIMILARITY) + "\" /></td></tr>";
 	
 	// 7. ElevenLabs warning
 	rows += "<tr class='CNElevenLabs' style='display: none;'><td colspan=2>ElevenLabs might not fully support some specific languages just yet due to the current API limitations, but I’m keeping an eye on updates! If you run into any issues, just give me a shout and I’ll do my best to help!.</td></tr>";
