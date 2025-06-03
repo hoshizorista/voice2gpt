@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "TalkGPT",
-	"version": "1.13",
+	"version": "1.14",
 	"description": "Talk to ChatGPT through your microphone and hear its responses with a voice. Uses speech recognition and text-to-speech technologies",
 	"action": {
 		"default_popup": "popup.html",
