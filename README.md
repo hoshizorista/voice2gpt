@@ -31,7 +31,12 @@ We now support <strong>ElevenLabs API</strong> integration, enabling users to cr
 
 # How to install
 
-1. Download repo as zip
+A of 07/07/2024 the extension is available on Chrome Web Store, just install it from here: 
+
+[TalkGPT Extension (click here to download)](https://chromewebstore.google.com/detail/talkgpt/ddfdbpdndbanjaffmoapdpmgnhbcigfl?authuser=8&hl=es-419)
+
+Manual Installation:
+1. Go to releases and download latest .zip
 2. Extract the .zip file in a folder somewhere, move chrome-extension folder (this is the folder you will use to install the extension)
 3. Follow this tutorial to install the extension in Chrome/Edge in dev mode: https://webkul.com/blog/how-to-install-the-unpacked-extension-in-chrome/
 
