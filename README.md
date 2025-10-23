@@ -1,25 +1,25 @@
 <hr>
 <p align="center">
   <a href="https://imgbb.com/">
-    <img src="https://i.ibb.co/ncf9q9z/icon-128.png" alt="icon-128" border="0">
+    <img src="https://i.ibb.co/JWKnvdBV/voice2gpt.png" alt="icon-128" border="0">
   </a>
 </p>
 <hr>
 
-# TalkGPT: Multi-function GPT TTS and Speech-To-Text extension
+# voice2gpt: Multi-function GPT TTS and Speech-To-Text extension (formerly talkgpt)
 
 Forked and updated with contributions from community, now compatible with the latest OpenAI models, extension will be gradually improved.
 
 --------------------------
 
 <p>
-  <strong>TalkGPT</strong> is a Google Chrome and Microsoft Edge extension that allows users to talk with the ChatGPT AI using their voice (speech recognition) and listen to the bot's answers with a voice (text-to-speech), rather than just by typing. This extension is a fork based on the original <strong>TalkToGPT</strong> extension by C-Nedelcu. 
+  <strong>voice2gpt</strong> is a Google Chrome and Microsoft Edge extension that allows users to talk with the ChatGPT AI using their voice (speech recognition) and listen to the bot's answers with a voice (text-to-speech), rather than just by typing. This extension is a fork based on the original <strong>TalkToGPT</strong> extension by C-Nedelcu. 
 
-  With TalkGPT, users can speak to the AI and receive spoken responses, making the interaction feel more natural and conversational. It offers the experience of having your own personal assistant, similar to Iron Man's Jarvis. Beyond entertainment, it's a valuable tool for helping the elderly and people with disabilities interact with ChatGPT. 
+  With voice2gpt, users can speak to the AI and receive spoken responses, making the interaction feel more natural and conversational. It offers the experience of having your own personal assistant, similar to Iron Man's Jarvis. Beyond entertainment, it's a valuable tool for helping the elderly and people with disabilities interact with ChatGPT. 
 
 We now support <strong>ElevenLabs API</strong> integration, enabling users to create custom voices for text-to-speech! You can select which <strong>ElevenLabs</strong> model produces the speech, for example <em>Eleven Flash&nbsp;2.5</em> for low latency or <em>Eleven Multilingual&nbsp;V2</em> for higher quality output.
 
-  Once started, TalkGPT displays a menu on the top-right corner of the page where users can access settings (such as voice, language, and more), skip the current message, toggle voice recognition on or off, and toggle text-to-speech on or off.
+  Once started, voice2gpt displays a menu on the top-right corner of the page where users can access settings (such as voice, language, and more), skip the current message, toggle voice recognition on or off, and toggle text-to-speech on or off.
 
   The settings menu can be seen below. Settings are saved in a cookie and reloaded automatically each time you activate the script.
 </p>
@@ -33,7 +33,7 @@ We now support <strong>ElevenLabs API</strong> integration, enabling users to cr
 
 A of 07/07/2024 the extension is available on Chrome Web Store, just install it from here: 
 
-[TalkGPT Extension (click here to download)](https://chromewebstore.google.com/detail/talkgpt/ddfdbpdndbanjaffmoapdpmgnhbcigfl?authuser=8&hl=es-419)
+[voice2gpt Extension (click here to download)](https://chromewebstore.google.com/detail/voice2gpt/ddfdbpdndbanjaffmoapdpmgnhbcigfl?authuser=8&hl=es-419)
 
 Manual Installation:
 1. Go to releases and download latest .zip
